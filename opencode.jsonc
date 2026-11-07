@@ -5,6 +5,10 @@
       "astro-docs": {
         "type": "remote",
         "url": "https://mcp.docs.astro.build/mcp"
+      },
+      "playwright": {
+        "type": "local",
+        "command": ["npx", "-y", "@playwright/mcp@latest"]
       }
     }
   }
