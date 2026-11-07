@@ -1,11 +1,13 @@
-# Descripción
+# Dona De Sangre
+
+## Descripción
 
 Nuestra aplicación consiste en un formulario para manejar información acerca de donadores de sangre en un laboratorio de investigación biomédica enfocada principalmente en cáncer de mama:
 
 - La aplicación contiene una capa de autenticación para que el manejo de el formulario esté controlado.
 - Utilizamos Supabase para el manejo de base de datos y la capa de autenticación.
 
-# Astro Starter Kit: Minimal
+## Astro Starter Kit: Minimal
 
 ```sh
 npm create astro@latest -- --template minimal
