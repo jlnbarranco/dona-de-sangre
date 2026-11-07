@@ -3,6 +3,7 @@
 ## Project
 
 - Blood-donor registry form for a breast-cancer research lab. `README.md` is in Spanish and mostly Astro starter boilerplate; its intro is the only real product description.
+- App must be responsive, should watch it clearly on smartphones and PC's.
 - Astro 7 static site + Tailwind CSS 4 (Vite plugin) + daisyUI 5. No UI framework integration (React/Vue/Svelte) and no SSR adapter.
 - `README.md` says Supabase provides the database and auth, but none of it exists yet: no `@supabase/*` dependency, no client, no `.env*` file. Do not assume it is wired up.
 - Only page: `src/pages/index.astro`. Only stylesheet: `src/styles/global.css`.
@@ -36,7 +37,8 @@ Manage it with `npx astro dev stop`, `npx astro dev status`, and `npx astro dev 
 
 - `/spec` only designs and writes the spec file (`specs/NN-slug.md`). It must never write or modify application code.
 - `/spec-impl` is the only workflow allowed to modify application code, and only when the spec's status means Approved (e.g. `Approved` / `Aprobado`). Otherwise it must stop without touching code.
-- Only a human moves a spec to `Approved`. `/spec-impl` creates/switches to branch `spec-NN-slug` before implementing.
+- `/spec-impl` executes the implementation plan **one numbered step at a time**: implement exactly one step, summarize the files touched and show the diff, then **stop and wait for human review**. Never chain several steps in one go; continue only after the user explicitly confirms (`yes`, `go`, equivalent). If there are no steps left, say so and stop.
+- Never commit automatically, per step or at the end; only when the user explicitly asks. Only a human moves a spec to `Approved` and to `Implemented`. `/spec-impl` creates/switches to branch `spec-NN-slug` before implementing.
 - `spec-verifier` only verifies and edits files under `specs/**`; it must not change app code or the spec's status.
 - `specs/` does not exist yet; the first spec creates it.
 - `spec-verifier`'s shell allowlist only matches bare `astro dev *`, which fails here (no global `astro`). Update it to `npx astro dev *` before relying on that agent.
