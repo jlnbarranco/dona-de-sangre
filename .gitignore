@@ -1,5 +1,9 @@
 # build output
 dist/
+.netlify/
+
+# artefactos de verificación con Playwright
+.playwright-mcp/
 # generated types
 .astro/
 

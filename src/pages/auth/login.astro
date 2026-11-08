@@ -1,5 +1,7 @@
 ---
 import '../../styles/global.css'
+
+const showError = Astro.url.searchParams.get('error') === 'invalid_credentials'
 ---
 
 <html lang="es">
@@ -15,7 +17,14 @@ import '../../styles/global.css'
 			<section class="card w-full max-w-sm bg-base-100 shadow-xl">
 				<div class="card-body gap-4">
 					<h1 class="card-title justify-center text-2xl">Dona de sangre</h1>
-					<form id="login-form" class="flex flex-col gap-4" method="post">
+					<form id="login-form" class="flex flex-col gap-4" method="post" action="/api/auth/login">
+						{
+							showError && (
+								<div role="alert" class="alert alert-error alert-soft">
+									<span>Correo o contraseña incorrectos</span>
+								</div>
+							)
+						}
 						<fieldset class="fieldset">
 							<label class="label" for="email">Correo</label>
 							<input id="email" name="email" type="email" class="input w-full" required autocomplete="email" />
@@ -27,14 +36,22 @@ import '../../styles/global.css'
 								<a href="#" class="link link-hover text-sm">¿Olvidaste tu contraseña?</a>
 							</div>
 						</fieldset>
-						<button type="submit" class="btn btn-primary w-full">Iniciar sesión</button>
+						<button id="login-submit" type="submit" class="btn btn-primary w-full">Iniciar sesión</button>
 					</form>
 				</div>
 			</section>
 		</main>
 
 		<script>
-			document.getElementById('login-form')?.addEventListener('submit', (event) => event.preventDefault())
+			const form = document.getElementById('login-form')
+			const submitButton = document.getElementById('login-submit')
+
+			form?.addEventListener('submit', () => {
+				if (!(submitButton instanceof HTMLButtonElement)) return
+
+				submitButton.disabled = true
+				submitButton.textContent = 'Ingresando…'
+			})
 		</script>
 	</body>
 </html>

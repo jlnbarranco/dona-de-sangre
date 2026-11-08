@@ -1,0 +1,81 @@
+---
+import '../styles/global.css'
+import type { Database } from '../lib/database.types'
+
+const claims = Astro.locals.claims
+
+if (!claims) {
+	return Astro.redirect('/auth/login?next=%2Fdashboard')
+}
+
+const { data: usuario, error } = await Astro.locals.supabase
+	.from('usuarios')
+	.select('nombre, email, rol')
+	.eq('id', claims.sub)
+	.single()
+
+type Rol = Database['public']['Enums']['rol_usuario']
+
+const ROL_INFO: Record<Rol, { label: string; className: string }> = {
+	admin: { label: 'Administrador', className: 'badge-neutral' },
+	supervisor: { label: 'Supervisor', className: 'badge-secondary' },
+	capturador: { label: 'Capturador', className: 'badge-ghost' }
+}
+
+const rolInfo = usuario ? ROL_INFO[usuario.rol] : null
+---
+
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Panel | Dona de sangre</title>
+	</head>
+	<body class="bg-base-200">
+		<div class="flex min-h-svh flex-col">
+			<header class="navbar bg-base-100 px-4 shadow-sm">
+				<div class="navbar-start min-w-0">
+					<span class="truncate font-semibold">Dona de sangre</span>
+				</div>
+				<div class="navbar-end">
+					<form method="post" action="/api/auth/logout">
+						<button type="submit" class="btn btn-ghost btn-sm">Cerrar sesión</button>
+					</form>
+				</div>
+			</header>
+
+			<main class="flex flex-1 items-start justify-center p-4 sm:items-center sm:p-6">
+				<section class="card w-full max-w-md bg-base-100 shadow-xl">
+					<div class="card-body gap-4">
+						<h1 class="card-title text-xl">Tu perfil</h1>
+
+						{usuario && rolInfo ? (
+							<dl class="flex flex-col gap-3">
+								<div class="min-w-0">
+									<dt class="text-sm text-base-content/60">Nombre</dt>
+									<dd class="font-medium break-words">{usuario.nombre}</dd>
+								</div>
+								<div class="min-w-0">
+									<dt class="text-sm text-base-content/60">Correo</dt>
+									<dd class="font-medium break-all">{usuario.email}</dd>
+								</div>
+								<div class="min-w-0">
+									<dt class="text-sm text-base-content/60">Rol</dt>
+									<dd class="mt-1">
+										<span class={`badge ${rolInfo.className}`}>{rolInfo.label}</span>
+									</dd>
+								</div>
+							</dl>
+						) : (
+							<div role="alert" class="alert alert-error">
+								<span>No se encontró tu perfil{error ? `: ${error.message}` : '.'}</span>
+							</div>
+						)}
+					</div>
+				</section>
+			</main>
+		</div>
+	</body>
+</html>
