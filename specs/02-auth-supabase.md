@@ -124,32 +124,32 @@ El primer `admin` se crea así, desde el SQL Editor o el MCP. No hay seed ni var
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` termina sin errores con el adapter de Netlify.
-- [ ] `astro.config.mjs` declara `adapter: netlify()` y `output: 'server'`.
-- [ ] Existe `netlify.toml` con `command = "npm run build"`, `publish = "dist"` y `NODE_VERSION = "22"`.
-- [ ] En `npm run dev`, `/` redirige a `/auth/login`.
-- [ ] `/dashboard` sin sesión responde 302 a `/auth/login?next=%2Fdashboard`.
-- [ ] `/auth/login` con sesión activa responde 302 a `/dashboard`.
-- [ ] `/api/auth/login` y `/api/auth/logout` solo aceptan `POST`; un `GET` responde 405.
-- [ ] Login con contraseña incorrecta redirige a `/auth/login?error=invalid_credentials`.
-- [ ] El mensaje de error mostrado es «Correo o contraseña incorrectos» y no revela si el correo existe.
-- [ ] Login con credenciales válidas redirige a `/dashboard` y responde con cookies `sb-*-auth-token`.
-- [ ] Las cookies de sesión son `httpOnly`, `secure` en producción y `sameSite=lax`.
-- [ ] `/dashboard` muestra el `nombre`, el `email` y el `rol` de la fila de `usuarios`.
-- [ ] «Cerrar sesión» borra las cookies y redirige a `/auth/login`; después, `/dashboard` vuelve a redirigir al login.
-- [ ] Un usuario autenticado solo ve su propia fila al consultar `usuarios`.
-- [ ] Un usuario con rol `admin` o `supervisor` ve todas las filas.
-- [ ] La clave anónima no puede hacer `insert`, `update` ni `delete` sobre `usuarios`.
-- [ ] Crear un usuario en el Dashboard de Supabase genera una fila en `usuarios` con `rol = 'capturador'`.
-- [ ] Si el usuario se crea sin metadato `nombre`, `usuarios.nombre` es la parte local del correo.
-- [ ] Cambiar el correo en Auth actualiza `usuarios.email`.
-- [ ] Borrar el usuario en Auth borra su fila en `usuarios` (cascade).
-- [ ] El SQL aplicado está versionado en `supabase/migrations/`.
-- [ ] `src/lib/database.types.ts` existe y el cliente está tipado con `Database`.
-- [ ] No existe ninguna variable `PUBLIC_SUPABASE_*` ni clave `service_role` en el repositorio.
-- [ ] El advisor de seguridad de Supabase no reporta hallazgos nuevos; el aviso previo de `public.rls_auto_enable()` sigue igual y no se toca.
-- [ ] Login y dashboard son usables a 320 px de ancho, sin scroll horizontal.
-- [ ] No hay errores en la consola del navegador en login, dashboard ni logout.
+- [x] `npm run build` termina sin errores con el adapter de Netlify.
+- [x] `astro.config.mjs` declara `adapter: netlify()` y `output: 'server'`.
+- [x] Existe `netlify.toml` con `command = "npm run build"`, `publish = "dist"` y `NODE_VERSION = "22"`.
+- [x] En `npm run dev`, `/` redirige a `/auth/login`.
+- [x] `/dashboard` sin sesión responde 302 a `/auth/login?next=%2Fdashboard`.
+- [x] `/auth/login` con sesión activa responde 302 a `/dashboard`.
+- [x] `/api/auth/login` y `/api/auth/logout` solo aceptan `POST`; un `GET` responde 405.
+- [x] Login con contraseña incorrecta redirige a `/auth/login?error=invalid_credentials`.
+- [x] El mensaje de error mostrado es «Correo o contraseña incorrectos» y no revela si el correo existe.
+- [x] Login con credenciales válidas redirige a `/dashboard` y responde con cookies `sb-*-auth-token`.
+- [x] Las cookies de sesión son `httpOnly`, `secure` en producción y `sameSite=lax`.
+- [x] `/dashboard` muestra el `nombre`, el `email` y el `rol` de la fila de `usuarios`.
+- [x] «Cerrar sesión» borra las cookies y redirige a `/auth/login`; después, `/dashboard` vuelve a redirigir al login.
+- [x] Un usuario autenticado solo ve su propia fila al consultar `usuarios`.
+- [x] Un usuario con rol `admin` o `supervisor` ve todas las filas.
+- [x] La clave anónima no puede hacer `insert`, `update` ni `delete` sobre `usuarios`.
+- [x] Crear un usuario en el Dashboard de Supabase genera una fila en `usuarios` con `rol = 'capturador'`.
+- [x] Si el usuario se crea sin metadato `nombre`, `usuarios.nombre` es la parte local del correo.
+- [x] Cambiar el correo en Auth actualiza `usuarios.email`.
+- [x] Borrar el usuario en Auth borra su fila en `usuarios` (cascade).
+- [x] El SQL aplicado está versionado en `supabase/migrations/`.
+- [x] `src/lib/database.types.ts` existe y el cliente está tipado con `Database`.
+- [x] No existe ninguna variable `PUBLIC_SUPABASE_*` ni clave `service_role` en el repositorio.
+- [x] El advisor de seguridad de Supabase no reporta hallazgos nuevos; el aviso previo de `public.rls_auto_enable()` sigue igual y no se toca.
+- [x] Login y dashboard son usables a 320 px de ancho, sin scroll horizontal.
+- [x] No hay errores en la consola del navegador en login, dashboard ni logout.
 
 ## Decisiones tomadas y descartadas
 
@@ -197,3 +197,37 @@ El primer `admin` se crea así, desde el SQL Editor o el MCP. No hay seed ni var
 - `public.rls_auto_enable()`, que ya existía y queda como está.
 
 Cada uno de esos puntos, si llega, va en su propio spec.
+
+## Verificación
+
+> **Fecha:** 2026-11-07
+> **Resultado:** 26/26 criterios verificados
+
+| Criterio | Estado | Evidencia | Notas |
+| --- | --- | --- | --- |
+| `npm run build` sin errores con adapter de Netlify | ✅ | `npm run build` → `[build] Complete!` (Server built in 5.29s, `adapter: @astrojs/netlify`); solo 2 avisos `Invalid empty selector` de daisyUI | Avisos no bloqueantes |
+| `adapter: netlify()` y `output: 'server'` | ✅ | `astro.config.mjs:9-10` | — |
+| `netlify.toml` con `command`, `publish`, `NODE_VERSION = "22"` | ✅ | `netlify.toml:1-6` | — |
+| `/` redirige a `/auth/login` en dev | ✅ | `GET http://localhost:4321/` → **301** `Location: http://localhost:4321/auth/login` | — |
+| `/dashboard` sin sesión → 302 `/auth/login?next=%2Fdashboard` | ✅ | `GET /dashboard` sin cookie → **302** `Location: /auth/login?next=%2Fdashboard` | — |
+| `/auth/login` con sesión → 302 `/dashboard` | ✅ | `GET /auth/login` con cookie `sb-swguryvbjzosovilywxf-auth-token` → **302** `Location: /dashboard` | — |
+| `GET` en login/logout → 405 | ✅ | `GET /api/auth/login` → **405**; `GET /api/auth/logout` → **405**; `src/pages/api/auth/login.ts:26-27`, `logout.ts:8-9` | — |
+| Contraseña incorrecta → `/auth/login?error=invalid_credentials` | ✅ | Playwright: submit con contraseña errónea → URL final `http://localhost:4321/auth/login?error=invalid_credentials` | — |
+| Mensaje «Correo o contraseña incorrectos» sin enumerar usuarios | ✅ | Playwright: `[role=alert]` = «Correo o contraseña incorrectos» tanto con contraseña errónea como con correo inexistente (`no-existe-xyz@example.com`) | Respuesta idéntica en ambos casos |
+| Login válido → `/dashboard` con cookies `sb-*-auth-token` | ✅ | Playwright login `capturador.spec02@example.com` → `/dashboard`; cookie `sb-swguryvbjzosovilywxf-auth-token` presente | — |
+| Cookies `httpOnly`, `secure` en producción, `sameSite=lax` | ✅ | Playwright (dev): `httpOnly: true`, `sameSite: "Lax"`, `secure: false`. Bundle de producción `.netlify/build/virtual_astro_middleware.mjs:46-48` → `secure: true` (`src/lib/supabase.ts:18-24`) | `secure` no se probó en un deploy real, solo en el bundle compilado |
+| `/dashboard` muestra `nombre`, `email` y `rol` | ✅ | Playwright: el HTML contiene «Capturador Spec 02», «capturador.spec02@example.com» y «Administrador»; `src/pages/dashboard.astro:11-15,54-70` | — |
+| «Cerrar sesión» borra cookies, redirige y protege `/dashboard` | ✅ | Playwright: click en «Cerrar sesión» → `/auth/login`; cookies `auth-token` 1 → 0; después `GET /dashboard` → **302** `/auth/login?next=%2Fdashboard` | — |
+| Usuario autenticado solo ve su fila | ✅ | SQL con `set local role authenticated` + claim `sub` del usuario `capturador`: `select` devuelve **1 fila** (la propia) | — |
+| `admin`/`supervisor` ven todas las filas | ✅ | SQL con claims del usuario `admin` → **3 filas**; con claims del usuario `supervisor` → **3 filas** | 3 usuarios temporales durante la prueba |
+| `anon` sin `insert`/`update`/`delete` | ✅ | SQL: `anon` insert/update/delete → `42501 permission denied for table usuarios`; `has_table_privilege('anon', ...)` = false; `authenticated` tampoco tiene DML (solo `SELECT`) | — |
+| Alta en Auth crea fila con `rol = 'capturador'` | ✅ | SQL: `insert` en `auth.users` (equivalente al alta del Dashboard) → fila en `usuarios` con `rol = 'capturador'` | Trigger `on_auth_user_created` |
+| Sin metadato `nombre` usa la parte local del correo | ✅ | SQL: alta con `raw_user_meta_data = {"foo":"bar"}` y email `temp.beta@example.com` → `usuarios.nombre = 'temp.beta'` | — |
+| Cambio de email sincroniza `usuarios.email` | ✅ | SQL: `update auth.users set email='Temp.Beta2@Example.com'` → `usuarios.email = 'temp.beta2@example.com'` | Normaliza a minúsculas |
+| Borrado en Auth hace cascade | ✅ | SQL: `delete from auth.users` → desaparece la fila de `usuarios`; el resto permanece | — |
+| SQL versionado en `supabase/migrations/` | ✅ | `supabase/migrations/20261107235752_create_usuarios.sql`; `list_migrations` = `20261107235333` + `20261107235752` | Ambas mitades consolidadas en un archivo, con las dos versiones documentadas en la cabecera |
+| `src/lib/database.types.ts` y cliente tipado con `Database` | ✅ | `src/lib/database.types.ts` (180 líneas); `src/lib/supabase.ts:10-11` usa `SupabaseClient<Database>` | — |
+| Sin `PUBLIC_SUPABASE_*` ni clave `service_role` en el repo | ✅ | `grep` sin `PUBLIC_SUPABASE_*` ni JWT (`eyJhbGciOi`) en el repo; `.env.template:1-7` documenta variables de servidor. `service_role` solo aparece como texto en documentación/skills, no como clave | `.env` local no versionado |
+| Advisor sin hallazgos nuevos; `rls_auto_enable()` intacto | ✅ | `get_advisors(security)`: solo los 2 avisos preexistentes de `public.rls_auto_enable()` (anon/authenticated) y `auth_leaked_password_protection` (opción de Auth preexistente y fuera de alcance) | No se modificó `rls_auto_enable()` |
+| Login y dashboard usables a 320 px sin scroll horizontal | ✅ | Playwright a 320×720: login `scrollWidth = 320 = innerWidth`; dashboard `scrollWidth = 320 = innerWidth`; capturas `spec02-login-320.png` y `spec02-dashboard-320.png` | — |
+| Sin errores de consola en login, dashboard ni logout | ✅ | Playwright con listeners `console`/`pageerror`: 0 errores en login inválido, login válido + dashboard y logout | — |
