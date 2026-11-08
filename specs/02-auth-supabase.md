@@ -1,6 +1,6 @@
 # SPEC 02 — Autenticación con Supabase, SSR y tabla `usuarios`
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-11-07
 > **Objetivo:** Conectar el login existente con Supabase Auth en modo SSR con cookies y crear la tabla `usuarios` con roles, un dashboard mínimo protegido y cierre de sesión.
