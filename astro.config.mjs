@@ -7,7 +7,13 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
-  adapter: netlify(),
+  adapter: netlify({
+    devFeatures: {
+      images: true,
+      environmentVariables: false,
+      edgeFunctions: false
+    }
+  }),
   env: {
     schema: {
       SUPABASE_URL: envField.string({ context: 'server', access: 'secret' }),
