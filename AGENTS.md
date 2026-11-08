@@ -3,19 +3,19 @@
 ## Project
 
 - Blood-donor registry form for a breast-cancer research lab. `README.md` is in Spanish and mostly Astro starter boilerplate; its intro is the only real product description.
-- App must be responsive, should watch it clearly on smartphones and PC's.
-- Astro 7 static site + Tailwind CSS 4 (Vite plugin) + daisyUI 5. No UI framework integration (React/Vue/Svelte) and no SSR adapter.
-- Supabase integration is partial: `@supabase/supabase-js` ^2.119.0 (installed 2.119.0) and the env vars exist, but there is no client module, no auth wiring, and login still only calls `preventDefault()`. Do not assume Supabase is functional.
-- Pages: `src/pages/auth/login.astro` only; `/` redirects to `/auth/login` through `redirects` in `astro.config.mjs` (the old `src/pages/index.astro` was removed in spec 01). Only stylesheet: `src/styles/global.css`.
+- App must be responsive: it has to read clearly on smartphones and PCs (verified at 320 px, no horizontal scroll).
+- Astro 7 SSR site (`output: 'server'`) with the `@astrojs/netlify` adapter, Tailwind CSS 4 (Vite plugin) and daisyUI 5. No UI framework integration (React/Vue/Svelte).
+- Supabase Auth is wired through `@supabase/ssr` with server-side cookies: `src/lib/supabase.ts`, `src/middleware.ts` (session refresh and `/dashboard` protection), `POST /api/auth/login` and `POST /api/auth/logout`. `public.usuarios` stores the profile and role (`admin` / `supervisor` / `capturador`) with RLS; it never stores passwords.
+- Pages: `src/pages/auth/login.astro`, protected `src/pages/dashboard.astro` and `src/pages/api/auth/{login,logout}.ts`; `/` redirects to `/auth/login` through `redirects` in `astro.config.mjs`. Only stylesheet: `src/styles/global.css`.
 
 ## Commands
 
 - `npm run dev` / `npm run build` / `npm run preview`.
-- There are no test, lint, or typecheck scripts. `npm run build` is the only verification step.
+- There are no test, lint, or typecheck scripts. `npm run build` is the main verification step; `npx tsc --noEmit` works too because TypeScript is installed transitively.
 - `astro` is not on PATH here: bare `astro ...` fails, so always use `npx astro ...`.
 - `astro check` is not installed either; running it prompts to install `@astrojs/check` and `typescript`.
 - The build prints `Invalid empty selector` warnings from daisyUI CSS; they are non-fatal (verified on Astro 7.4.7 / daisyUI 5.7.50).
-- No Supabase CLI is installed or declared, and there is no `supabase/` directory or `config.toml`. Database work currently goes through the Supabase MCP server or the dashboard; if the CLI is added, invoke it as `npx supabase` and commit `supabase/`.
+- No Supabase CLI is installed or declared and there is no `supabase/config.toml`; database work goes through the Supabase MCP server or the dashboard, and applied SQL is versioned in `supabase/migrations/`. If the CLI is added, invoke it as `npx supabase` and commit `supabase/`.
 
 ## Dev server
 
@@ -37,11 +37,12 @@ Manage it with `npx astro dev stop`, `npx astro dev status`, and `npx astro dev 
 ## Supabase
 
 - Read `.agents/skills/supabase/SKILL.md` before any Supabase task, and `.agents/skills/supabase-postgres-best-practices/SKILL.md` before schema, migration, SQL, index, or RLS work. Supabase changes often: verify against the current docs/changelog instead of memory.
-- `@supabase/supabase-js` is the only Supabase package. `@supabase/ssr` and an SSR adapter are not installed, so the site stays static and any session/auth logic is client-side unless a spec introduces SSR.
+- `@supabase/supabase-js`, `@supabase/ssr` and the `@astrojs/netlify` SSR adapter are installed; the site is no longer static.
 - Env vars live in `.env` (gitignored) and `.env.template` (tracked): `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_DB_PASSWORD`. `.env` is populated locally; never commit it or copy real values into `.env.template`.
-- Astro only exposes `PUBLIC_*` variables to client code. The current names have no prefix, so browser code cannot read them: either rename to `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_KEY` (publishable/anon key only) or keep the calls server-side under SSR. `SUPABASE_DB_PASSWORD` is admin/CLI-only and must never reach the client.
-- Never use a `service_role`/secret key in frontend code. Enable RLS on every table in an exposed schema and write policies per table, not a blanket `auth.uid()`.
-- No Supabase client module exists yet. Creating `src/lib/supabase.*` (or any DB/auth call) belongs to an approved spec, not to ad-hoc work.
+- `SUPABASE_URL` and `SUPABASE_KEY` are server-only: declared in `astro:env` as `context: 'server'`, `access: 'secret'` and read only by `src/lib/supabase.ts`. Never rename them to `PUBLIC_*` or expose them to client code. `SUPABASE_DB_PASSWORD` is CLI/MCP-only and must never reach the client.
+- Never use a `service_role`/secret key in frontend code. Enable RLS on every table in an exposed schema and write policies per table, not a blanket `auth.uid()`. `public.usuarios` already has RLS and `select`-only grants for `authenticated`.
+- Session cookies are `httpOnly`, `sameSite=lax` and `secure` only in production; requests are authorized with `getClaims()`, not `getSession()`. Only routes under `/dashboard` are protected.
+- Types are generated with `generate_typescript_types` from the MCP and stored in `src/lib/database.types.ts`; the server client is `SupabaseClient<Database>`.
 - The Supabase MCP server is configured globally in `~/.config/opencode/opencode.jsonc` (project ref `swguryvbjzosovilywxf`), not in this repo's `opencode.jsonc`. Use it to inspect tables, migrations, logs, and advisors before changing the remote project.
 
 ## Spec workflow
