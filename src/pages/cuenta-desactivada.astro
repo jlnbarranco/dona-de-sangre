@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../components/ui/BaseLayout.astro'
+import AlertError from '../components/ui/AlertError.astro'
+import AuthCard from '../features/auth/components/AuthCard.astro'
+
+Astro.response.status = 403
+---
+
+<BaseLayout title="Cuenta desactivada | Dona de sangre">
+	<AuthCard>
+		<h1 class="card-title justify-center text-2xl">Cuenta desactivada</h1>
+		<AlertError soft>
+			<span>Tu cuenta está desactivada. Contacta con el administrador.</span>
+		</AlertError>
+		<a href="/auth/login" class="btn btn-primary w-full">Ir al inicio de sesión</a>
+	</AuthCard>
+</BaseLayout>

@@ -1,0 +1,79 @@
+---
+import { UserPlus } from '@lucide/astro'
+import AlertError from '../../../components/ui/AlertError.astro'
+import { USERS_PER_PAGE, type UsersListResult } from '../lib/users-list'
+import UsersDeleteModal from './UsersDeleteModal.astro'
+import UsersEditModal from './UsersEditModal.astro'
+import UsersInviteModal from './UsersInviteModal.astro'
+import UsersPagination from './UsersPagination.astro'
+import UsersResendModal from './UsersResendModal.astro'
+import UsersSearchForm from './UsersSearchForm.astro'
+import UsersTable from './UsersTable.astro'
+
+interface Props {
+	denied?: boolean
+	result?: UsersListResult
+	currentUserId: string
+}
+
+const { denied = false, result, currentUserId } = Astro.props
+
+const desde = result ? (result.page - 1) * USERS_PER_PAGE + 1 : 0
+const hasta = result ? desde + result.usuarios.length - 1 : 0
+// Solo la rama autorizada puede dar de alta personas: el botón y el modal no se renderizan si no.
+const autorizado = !denied && result !== undefined
+---
+
+<section class="card w-full max-w-4xl bg-base-100 shadow-xl">
+	<div class="card-body gap-4">
+		<div class="flex flex-wrap items-center justify-between gap-2">
+			<h1 class="card-title text-xl">Administrar usuarios</h1>
+
+			{
+				autorizado && (
+					<button type="button" class="btn btn-primary btn-sm" data-invite-open>
+						<UserPlus size={16} />
+						Agregar usuario
+					</button>
+				)
+			}
+		</div>
+
+		{
+			denied ? (
+				<AlertError>
+					<span>Acceso denegado: esta sección está reservada a los administradores.</span>
+				</AlertError>
+			) : result ? (
+				<>
+					<UsersSearchForm search={result.search} estatus={result.estatus} />
+
+					<UsersTable
+						usuarios={result.usuarios}
+						search={result.search}
+						estatus={result.estatus}
+						currentUserId={currentUserId}
+					/>
+
+					{result.usuarios.length > 0 && (
+						<p class="text-sm text-base-content/60">
+							Mostrando {desde}–{hasta} de {result.total} usuarios
+						</p>
+					)}
+
+					<UsersPagination
+						page={result.page}
+						totalPages={result.totalPages}
+						search={result.search}
+						estatus={result.estatus}
+					/>
+				</>
+			) : null
+		}
+	</div>
+</section>
+
+{autorizado && <UsersInviteModal />}
+{autorizado && <UsersEditModal currentUserId={currentUserId} />}
+{autorizado && <UsersDeleteModal />}
+{autorizado && <UsersResendModal />}

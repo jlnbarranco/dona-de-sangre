@@ -1,0 +1,233 @@
+---
+import { ROL_INFO, ROL_VALUES } from '../../../lib/roles'
+---
+
+<dialog id="users-invite-modal" class="modal" aria-labelledby="users-invite-title">
+	<div class="modal-box">
+		<h3 id="users-invite-title" class="text-lg font-bold">Agregar usuario</h3>
+
+		<ul class="steps steps-horizontal my-4" data-steps>
+			<li class="step step-primary">Datos</li>
+			<li class="step" data-step-confirmacion>Confirmación</li>
+		</ul>
+
+		<form id="users-invite-form" data-vista="form" class="flex flex-col gap-1">
+			<fieldset class="fieldset">
+				<label class="label" for="users-invite-nombre">Nombre</label>
+				<input
+					id="users-invite-nombre"
+					name="nombre"
+					type="text"
+					class="input w-full"
+					required
+					maxlength="120"
+					autocomplete="off"
+				/>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<label class="label" for="users-invite-email">Correo electrónico</label>
+				<input
+					id="users-invite-email"
+					name="email"
+					type="email"
+					class="input w-full"
+					required
+					autocomplete="off"
+				/>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<label class="label" for="users-invite-rol">Rol</label>
+				<select id="users-invite-rol" name="rol" class="select w-full" required>
+					{
+						ROL_VALUES.map((rol) => (
+							<option value={rol} selected={rol === 'capturador'}>
+								{ROL_INFO[rol].label}
+							</option>
+						))
+					}
+				</select>
+			</fieldset>
+
+			<div class="modal-action">
+				<button type="submit" class="btn btn-primary">Revisar datos</button>
+			</div>
+		</form>
+
+		<div data-vista="confirm" class="hidden">
+			<dl class="flex flex-col gap-3">
+				<div>
+					<dt class="text-sm text-base-content/60">Nombre</dt>
+					<dd class="font-medium wrap-break-word" data-resumen="nombre"></dd>
+				</div>
+				<div>
+					<dt class="text-sm text-base-content/60">Correo electrónico</dt>
+					<dd class="font-medium break-all" data-resumen="email"></dd>
+				</div>
+				<div>
+					<dt class="text-sm text-base-content/60">Rol</dt>
+					<dd class="font-medium" data-resumen="rol"></dd>
+				</div>
+			</dl>
+
+			<div class="modal-action">
+				<button type="button" class="btn" data-accion="volver">Volver a editar</button>
+				<button type="button" class="btn btn-primary" data-accion="enviar">Enviar invitación</button>
+			</div>
+		</div>
+
+		<div data-vista="result" class="hidden">
+			<div data-resultado></div>
+
+			<div class="modal-action">
+				<button type="button" class="btn" data-accion="volver">Volver a editar</button>
+				<button type="button" class="btn btn-primary hidden" data-accion="cerrar-listado">
+					Cerrar y ver el listado
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<form method="dialog" class="modal-backdrop">
+		<button aria-label="Cerrar">Cerrar</button>
+	</form>
+</dialog>
+
+<script>
+	function query<T extends HTMLElement>(selector: string): T | null {
+		return document.querySelector<T>(selector)
+	}
+
+	const dialog = query<HTMLDialogElement>('#users-invite-modal')
+	const form = query<HTMLFormElement>('#users-invite-form')
+	const nombreInput = query<HTMLInputElement>('#users-invite-nombre')
+	const emailInput = query<HTMLInputElement>('#users-invite-email')
+	const rolSelect = query<HTMLSelectElement>('#users-invite-rol')
+	const steps = query('[data-steps]')
+	const stepConfirmacion = query('[data-step-confirmacion]')
+	const resumenNombre = query('[data-resumen="nombre"]')
+	const resumenEmail = query('[data-resumen="email"]')
+	const resumenRol = query('[data-resumen="rol"]')
+	const botonEnviar = query<HTMLButtonElement>('[data-accion="enviar"]')
+	const botonCerrarListado = query<HTMLButtonElement>('[data-accion="cerrar-listado"]')
+	const botonesVolver = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-accion="volver"]'))
+	const resultado = query('[data-resultado]')
+
+	const vistas = {
+		form: query('[data-vista="form"]'),
+		confirm: query('[data-vista="confirm"]'),
+		result: query('[data-vista="result"]')
+	}
+
+	type Vista = keyof typeof vistas
+
+	function mostrarVista(vista: Vista) {
+		(Object.keys(vistas) as Vista[]).forEach((nombre) => {
+			vistas[nombre]?.classList.toggle('hidden', nombre !== vista)
+		})
+		steps?.classList.toggle('hidden', vista === 'result')
+		stepConfirmacion?.classList.toggle('step-primary', vista === 'confirm')
+	}
+
+	function datosDelFormulario() {
+		return {
+			nombre: nombreInput?.value.trim() ?? '',
+			email: emailInput?.value.trim() ?? '',
+			rol: rolSelect?.value ?? ''
+		}
+	}
+
+	function pintarAlerta(mensaje: string, variante: 'alert-success' | 'alert-error') {
+		if (!resultado) {
+			return
+		}
+
+		const alerta = document.createElement('div')
+		alerta.className = `alert ${variante}`
+		const texto = document.createElement('span')
+		texto.textContent = mensaje
+		alerta.appendChild(texto)
+		resultado.replaceChildren(alerta)
+	}
+
+	function mostrarExito(email: string) {
+		pintarAlerta(`Invitación enviada a ${email}`, 'alert-success')
+		botonesVolver.forEach((boton) => boton.classList.add('hidden'))
+		botonCerrarListado?.classList.remove('hidden')
+		mostrarVista('result')
+	}
+
+	function mostrarError(mensaje: string) {
+		pintarAlerta(mensaje, 'alert-error')
+		botonesVolver.forEach((boton) => boton.classList.remove('hidden'))
+		botonCerrarListado?.classList.add('hidden')
+		mostrarVista('result')
+	}
+	form?.addEventListener('submit', (event) => {
+		// El paso previo no envía nada: solo muestra el resumen de los datos.
+		event.preventDefault()
+		const datos = datosDelFormulario()
+
+		if (resumenNombre) resumenNombre.textContent = datos.nombre
+		if (resumenEmail) resumenEmail.textContent = datos.email
+		if (resumenRol) resumenRol.textContent = rolSelect?.selectedOptions[0]?.textContent?.trim() ?? ''
+
+		mostrarVista('confirm')
+	})
+
+	botonesVolver.forEach((boton) => {
+		boton.addEventListener('click', () => {
+			mostrarVista('form')
+		})
+	})
+
+	botonCerrarListado?.addEventListener('click', () => {
+		dialog?.close()
+		window.location.reload()
+	})
+
+	botonEnviar?.addEventListener('click', async () => {
+		const datos = datosDelFormulario()
+		botonEnviar.classList.add('btn-loading')
+		botonEnviar.disabled = true
+
+		try {
+			const response = await fetch('/api/invitations', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(datos)
+			})
+			const payload = await response.json().catch(() => null)
+
+			if (!response.ok) {
+				mostrarError(payload?.error ?? 'No se pudo enviar la invitación.')
+				return
+			}
+
+			mostrarExito(datos.email)
+		} catch {
+			mostrarError('No se pudo enviar la invitación.')
+		} finally {
+			botonEnviar.classList.remove('btn-loading')
+			botonEnviar.disabled = false
+		}
+	})
+
+	document.querySelectorAll<HTMLElement>('[data-invite-open]').forEach((boton) => {
+		boton.addEventListener('click', () => {
+			form?.reset()
+			mostrarVista('form')
+			if (dialog && !dialog.open) {
+				dialog.showModal()
+			}
+		})
+	})
+
+	dialog?.addEventListener('close', () => {
+		// La siguiente invitación empieza limpia.
+		form?.reset()
+		resultado?.replaceChildren()
+		mostrarVista('form')
+	})
+</script>

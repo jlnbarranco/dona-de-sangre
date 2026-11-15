@@ -1,0 +1,67 @@
+---
+import type { Estatus } from '../../../lib/estatus'
+import { buildPageWindow } from '../lib/users-list'
+
+interface Props {
+	page: number
+	totalPages: number
+	search: string
+	estatus: Estatus | null
+}
+
+const { page, totalPages, search, estatus } = Astro.props
+
+const pageUrl = (target: number) => {
+	const params = new URLSearchParams()
+
+	if (search) {
+		params.set('q', search)
+	}
+
+	if (estatus) {
+		params.set('estatus', estatus)
+	}
+
+	params.set('page', String(target))
+
+	return `/dashboard/admin/users?${params.toString()}`
+}
+
+const pages = buildPageWindow(page, totalPages)
+---
+
+{
+	totalPages > 1 && (
+		<nav class="flex justify-center" aria-label="Paginación de usuarios">
+			<div class="join">
+				{page > 1 ? (
+					<a href={pageUrl(page - 1)} class="btn btn-sm join-item">
+						Anterior
+					</a>
+				) : (
+					<span class="btn btn-sm join-item btn-disabled">Anterior</span>
+				)}
+
+				{pages.map((number) =>
+					number === page ? (
+						<span class="btn btn-sm join-item btn-primary" aria-current="page">
+							{number}
+						</span>
+					) : (
+						<a href={pageUrl(number)} class="btn btn-sm join-item">
+							{number}
+						</a>
+					)
+				)}
+
+				{page < totalPages ? (
+					<a href={pageUrl(page + 1)} class="btn btn-sm join-item">
+						Siguiente
+					</a>
+				) : (
+					<span class="btn btn-sm join-item btn-disabled">Siguiente</span>
+				)}
+			</div>
+		</nav>
+	)
+}

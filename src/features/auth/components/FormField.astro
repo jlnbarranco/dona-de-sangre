@@ -1,0 +1,32 @@
+---
+interface Props {
+	id: string
+	label: string
+	type?: astroHTML.JSX.HTMLInputTypeAttribute
+	name?: string
+	required?: boolean
+	minlength?: number | string
+	autocomplete?: string
+}
+
+const { id, label, type, name = id, required = false, minlength, autocomplete } = Astro.props
+---
+
+<fieldset class="fieldset">
+	<label class="label" for={id}>{label}</label>
+	{
+		Astro.slots.has('default') ? (
+			<slot />
+		) : (
+			<input
+				id={id}
+				name={name}
+				type={type}
+				class="input w-full"
+				required={required}
+				minlength={minlength}
+				autocomplete={autocomplete}
+			/>
+		)
+	}
+</fieldset>

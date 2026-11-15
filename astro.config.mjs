@@ -17,7 +17,13 @@ export default defineConfig({
   env: {
     schema: {
       SUPABASE_URL: envField.string({ context: 'server', access: 'secret' }),
-      SUPABASE_KEY: envField.string({ context: 'server', access: 'secret' })
+      SUPABASE_KEY: envField.string({ context: 'server', access: 'secret' }),
+      // Clave secreta admin server-only (generateLink). Nunca llega al cliente.
+      SUPABASE_SECRET_API_KEY: envField.string({ context: 'server', access: 'secret' }),
+      SMTP_HOST: envField.string({ context: 'server', access: 'secret' }),
+      SMTP_PORT: envField.string({ context: 'server', access: 'secret' }),
+      SMTP_USER: envField.string({ context: 'server', access: 'secret' }),
+      SMTP_PASS: envField.string({ context: 'server', access: 'secret' })
     }
   },
   redirects: {

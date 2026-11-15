@@ -82,3 +82,12 @@
   --depth: 1;
   --noise: 0;
 }
+
+@layer components {
+  /* daisyUI alinea las acciones del modal a la derecha sin permitir el salto de
+     línea: en pantallas estrechas los botones desbordan y se recortan. */
+  .modal-action {
+    flex-wrap: wrap;
+  }
+
+}

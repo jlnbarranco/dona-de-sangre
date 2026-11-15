@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../../components/ui/BaseLayout.astro';
+import AuthCard from '../../features/auth/components/AuthCard.astro';
+import type { EmailOtpType } from '@supabase/supabase-js';
+
+const DEFAULT_NEXT = '/auth/update-password';
+// Genérico a propósito: no revela si el correo existe ni distingue caducado de usado.
+const ERROR_MESSAGE =
+	'El enlace no es válido, ya se usó o ha caducado. Si ha caducado, pide una nueva invitación al administrador.';
+
+// Solo rutas internas: ni URL absoluta ni host encubierto (// o /\).
+function sanitizeNext(value: string | null): string {
+	if (!value) return DEFAULT_NEXT;
+	if (!value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) {
+		return DEFAULT_NEXT;
+	}
+	return value;
+}
+
+const tokenHash = Astro.url.searchParams.get('token_hash');
+const type = Astro.url.searchParams.get('type') as EmailOtpType | null;
+const next = sanitizeNext(Astro.url.searchParams.get('next'));
+
+let hasError = !tokenHash || !type;
+
+if (!hasError) {
+	// verifyOtp crea la sesión (cookies httpOnly) en este navegador.
+	const { error } = await Astro.locals.supabase.auth.verifyOtp({
+		type: type!,
+		token_hash: tokenHash!
+	});
+	if (error) {
+		console.error('[auth/confirm] verifyOtp falló:', error.message);
+		hasError = true;
+	}
+}
+
+if (!hasError) {
+	return Astro.redirect(next);
+}
+
+// 200 a propósito: un estado de error con status 4xx/5xx hace que el navegador
+// registre «Failed to load resource» en consola (criterio de flujo sin errores).
+---
+
+<BaseLayout title="Enlace no válido | Dona de sangre">
+	<AuthCard>
+		<h1 class="card-title justify-center text-2xl">Enlace no válido</h1>
+		<div role="alert" class="alert alert-error alert-soft">
+			<span>{ERROR_MESSAGE}</span>
+		</div>
+		<a href="/auth/login" class="btn btn-primary w-full">Ir a iniciar sesión</a>
+	</AuthCard>
+</BaseLayout>

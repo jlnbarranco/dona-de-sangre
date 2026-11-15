@@ -1,0 +1,104 @@
+<dialog id="users-delete-modal" class="modal" aria-labelledby="users-delete-title">
+	<div class="modal-box">
+		<h3 id="users-delete-title" class="text-lg font-bold">Eliminar usuario</h3>
+
+		<p class="py-3" data-texto></p>
+
+		<div role="alert" class="alert alert-warning">
+			<span>
+				Si solo necesitas quitarle el acceso, cambia su estatus a «Inactivo»: la cuenta se
+				conserva y puede reactivarse después.
+			</span>
+		</div>
+
+		<div data-resultado></div>
+
+		<div class="modal-action">
+			<button type="button" class="btn" data-accion="cancelar">Cancelar</button>
+			<button type="button" class="btn btn-error" data-accion="confirmar-borrado">
+				Eliminar definitivamente
+			</button>
+		</div>
+	</div>
+
+	<form method="dialog" class="modal-backdrop">
+		<button aria-label="Cerrar">Cerrar</button>
+	</form>
+</dialog>
+
+<script>
+	function query<T extends HTMLElement>(selector: string): T | null {
+		return document.querySelector<T>(selector)
+	}
+
+	const dialog = query<HTMLDialogElement>('#users-delete-modal')
+	const texto = dialog?.querySelector('[data-texto]')
+	const resultado = dialog?.querySelector('[data-resultado]')
+	const botonEliminar = dialog?.querySelector<HTMLButtonElement>('[data-accion="confirmar-borrado"]')
+	const botonCancelar = dialog?.querySelector<HTMLButtonElement>('[data-accion="cancelar"]')
+
+	let usuarioId = ''
+
+	function mostrarError(mensaje: string) {
+		if (!resultado) {
+			return
+		}
+
+		const alerta = document.createElement('div')
+		alerta.className = 'alert alert-error'
+		const texto = document.createElement('span')
+		texto.textContent = mensaje
+		alerta.appendChild(texto)
+		resultado.replaceChildren(alerta)
+	}
+
+	document.querySelectorAll<HTMLButtonElement>('[data-accion="eliminar"]').forEach((boton) => {
+		boton.addEventListener('click', () => {
+			usuarioId = boton.dataset.userId ?? ''
+
+			// La frase se arma aquí: el correo va entre paréntesis tras el nombre.
+			if (texto) {
+				texto.textContent =
+					`Vas a eliminar definitivamente a ${boton.dataset.userNombre ?? ''} ` +
+					`(${boton.dataset.userEmail ?? ''}). Se borrará su cuenta y no podrá volver a entrar.`
+			}
+
+			resultado?.replaceChildren()
+
+			if (dialog && !dialog.open) {
+				dialog.showModal()
+			}
+		})
+	})
+
+	botonCancelar?.addEventListener('click', () => {
+		dialog?.close()
+	})
+
+	botonEliminar?.addEventListener('click', async () => {
+		if (!usuarioId) {
+			return
+		}
+
+		botonEliminar.classList.add('btn-loading')
+		botonEliminar.disabled = true
+
+		try {
+			const response = await fetch(`/api/users/${usuarioId}`, { method: 'DELETE' })
+			const data = await response.json().catch(() => null)
+
+			if (!response.ok) {
+				mostrarError(data?.error ?? 'No se pudo eliminar el usuario.')
+				return
+			}
+
+			dialog?.close()
+			window.location.reload()
+		} catch {
+			mostrarError('No se pudo eliminar el usuario.')
+		} finally {
+			botonEliminar.classList.remove('btn-loading')
+			botonEliminar.disabled = false
+		}
+	})
+</script>

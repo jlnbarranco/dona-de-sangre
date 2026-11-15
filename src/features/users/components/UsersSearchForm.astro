@@ -1,0 +1,42 @@
+---
+import { Search } from '@lucide/astro'
+import type { Estatus } from '../../../lib/estatus'
+
+interface Props {
+	search: string
+	estatus: Estatus | null
+}
+
+const { search, estatus } = Astro.props
+---
+
+<form method="get" action="/dashboard/admin/users" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+	<fieldset class="fieldset min-w-0 flex-1">
+		<label class="label" for="users-search">Buscar por nombre o correo</label>
+		<input
+			id="users-search"
+			name="q"
+			type="search"
+			class="input w-full"
+			value={search}
+			placeholder="Nombre o correo"
+		/>
+	</fieldset>
+
+	<fieldset class="fieldset min-w-0">
+		<label class="label" for="users-estatus">Filtrar por estatus</label>
+		<select id="users-estatus" name="estatus" class="select w-full">
+			<option value="" selected={!estatus}>Todos</option>
+			<option value="activo" selected={estatus === 'activo'}>Activos</option>
+			<option value="inactivo" selected={estatus === 'inactivo'}>Inactivos</option>
+		</select>
+	</fieldset>
+
+	<div class="flex gap-2 mb-1">
+		<button type="submit" class="btn btn-primary">
+			<Search size={16} />
+			Buscar
+		</button>
+		{(search || estatus) && <a href="/dashboard/admin/users" class="btn btn-ghost">Quitar filtros</a>}
+	</div>
+</form>

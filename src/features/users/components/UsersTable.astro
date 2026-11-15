@@ -1,0 +1,142 @@
+---
+import { Pencil, Send, Trash } from '@lucide/astro'
+import { ESTATUS_INFO } from '../../../lib/estatus'
+import type { Estatus } from '../../../lib/estatus'
+import { ROL_INFO } from '../../../lib/roles'
+import type { UsuarioListItem } from '../lib/users-list'
+
+interface Props {
+	usuarios: UsuarioListItem[]
+	search: string
+	estatus: Estatus | null
+	currentUserId: string
+}
+
+const { usuarios, search, estatus, currentUserId } = Astro.props
+
+const emptyMessage = search
+	? `No se encontraron usuarios que coincidan con «${search}».`
+	: estatus
+		? `No se encontraron usuarios con el estatus «${ESTATUS_INFO[estatus].label}».`
+		: 'Todavía no hay usuarios registrados.'
+
+const fechaCorta = new Intl.DateTimeFormat('es-ES', {
+	day: '2-digit',
+	month: '2-digit',
+	year: 'numeric'
+})
+
+function formatearFecha(iso: string): string {
+	return fechaCorta.format(new Date(iso))
+}
+---
+
+{
+	usuarios.length === 0 ? (
+		<p class="py-6 text-center text-base-content/70">{emptyMessage}</p>
+	) : (
+		<div class="overflow-x-auto">
+			<table class="table">
+				<caption class="pb-2 text-left text-sm text-base-content/60">
+					Usuarios registrados en el laboratorio
+				</caption>
+				<thead>
+					<tr>
+						<th>Nombre</th>
+						<th>Correo</th>
+						<th>Rol</th>
+						<th>Estatus</th>
+						<th>Invitación</th>
+						<th>Acciones</th>
+					</tr>
+				</thead>
+				<tbody>
+					{usuarios.map((usuario) => (
+						<tr>
+							<td class="font-medium">{usuario.nombre}</td>
+							<td class="break-all text-nowrap">{usuario.email}</td>
+							<td>
+								<span class={`badge ${ROL_INFO[usuario.rol].className}`}>
+									{ROL_INFO[usuario.rol].label}
+								</span>
+							</td>
+							<td>
+								<span class={`badge ${ESTATUS_INFO[usuario.estatus].className}`}>
+									{ESTATUS_INFO[usuario.estatus].label}
+								</span>
+							</td>
+							<td>
+								{usuario.email_confirmado ? (
+									<span class="badge badge-ghost">Confirmada</span>
+								) : (
+									<div class="flex flex-col items-start gap-1">
+										<span class="badge badge-warning">Pendiente</span>
+										{usuario.invitado_at && (
+											<span class="text-xs text-base-content/60">
+												Invitación enviada el {formatearFecha(usuario.invitado_at)}
+											</span>
+										)}
+									</div>
+								)}
+							</td>
+							<td>
+								<div class="flex justify-end gap-1">
+									<button
+										type="button"
+										class="btn btn-ghost btn-xs btn-square"
+										aria-label={`Editar a ${usuario.nombre}`}
+										title="Editar"
+										data-accion="editar"
+										data-user-id={usuario.id}
+										data-user-nombre={usuario.nombre}
+										data-user-email={usuario.email}
+										data-user-rol={usuario.rol}
+										data-user-estatus={usuario.estatus}
+										data-user-confirmado={String(usuario.email_confirmado)}
+									>
+										<Pencil size={16} />
+									</button>
+
+									{!usuario.email_confirmado && (
+										<button
+											type="button"
+											class="btn btn-ghost btn-xs btn-square"
+											aria-label={`Reenviar invitación a ${usuario.nombre}`}
+											title="Reenviar invitación"
+											data-accion="reenviar"
+											data-user-id={usuario.id}
+											data-user-nombre={usuario.nombre}
+											data-user-email={usuario.email}
+											data-user-rol={usuario.rol}
+											data-user-estatus={usuario.estatus}
+											data-user-confirmado={String(usuario.email_confirmado)}
+										>
+											<Send size={16} />
+										</button>
+									)}
+
+									<button
+										type="button"
+										class="btn btn-ghost btn-xs btn-square text-error"
+										aria-label={`Eliminar a ${usuario.nombre}`}
+										title={usuario.id === currentUserId ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'}
+										disabled={usuario.id === currentUserId}
+										data-accion="eliminar"
+										data-user-id={usuario.id}
+										data-user-nombre={usuario.nombre}
+										data-user-email={usuario.email}
+										data-user-rol={usuario.rol}
+										data-user-estatus={usuario.estatus}
+										data-user-confirmado={String(usuario.email_confirmado)}
+									>
+										<Trash size={16} />
+									</button>
+								</div>
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	)
+}

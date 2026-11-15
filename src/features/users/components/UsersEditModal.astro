@@ -1,0 +1,189 @@
+---
+import { ESTATUS_INFO, ESTATUS_VALUES } from '../../../lib/estatus'
+import { ROL_INFO, ROL_VALUES } from '../../../lib/roles'
+
+interface Props {
+	currentUserId: string
+}
+
+const { currentUserId } = Astro.props
+---
+
+<dialog
+	id="users-edit-modal"
+	class="modal"
+	aria-labelledby="users-edit-title"
+	data-current-user-id={currentUserId}
+>
+	<div class="modal-box">
+		<h3 id="users-edit-title" class="text-lg font-bold">Editar usuario</h3>
+
+		<div role="alert" class="alert alert-info mt-4 hidden" data-aviso>
+			<span>No puedes cambiar tu propio rol ni tu estatus.</span>
+		</div>
+
+		<form id="users-edit-form" class="flex flex-col gap-1">
+			<fieldset class="fieldset">
+				<label class="label" for="users-edit-nombre">Nombre</label>
+				<input
+					id="users-edit-nombre"
+					name="nombre"
+					type="text"
+					class="input w-full"
+					required
+					maxlength="120"
+					autocomplete="off"
+				/>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<label class="label" for="users-edit-email">Correo electrónico</label>
+				<input
+					id="users-edit-email"
+					name="email"
+					type="email"
+					class="input w-full"
+					readonly
+					aria-readonly="true"
+				/>
+				<p class="text-xs text-base-content/60">
+					El correo no se puede editar. Si necesitas cambiarlo, elimina esta cuenta y crea otra
+					con el nuevo correo.
+				</p>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<label class="label" for="users-edit-rol">Rol</label>
+				<select id="users-edit-rol" name="rol" class="select w-full" required>
+					{ROL_VALUES.map((rol) => <option value={rol}>{ROL_INFO[rol].label}</option>)}
+				</select>
+			</fieldset>
+
+			<fieldset class="fieldset">
+				<label class="label" for="users-edit-estatus">Estatus</label>
+				<select id="users-edit-estatus" name="estatus" class="select w-full" required>
+					{ESTATUS_VALUES.map((estatus) => (
+						<option value={estatus}>{ESTATUS_INFO[estatus].label}</option>
+					))}
+				</select>
+			</fieldset>
+
+			<div data-resultado></div>
+
+			<div class="modal-action">
+				<button type="button" class="btn" data-accion="cancelar">Cancelar</button>
+				<button type="submit" class="btn btn-primary" data-accion="guardar">
+					Guardar cambios
+				</button>
+			</div>
+		</form>
+	</div>
+
+	<form method="dialog" class="modal-backdrop">
+		<button aria-label="Cerrar">Cerrar</button>
+	</form>
+</dialog>
+
+<script>
+	function query<T extends HTMLElement>(selector: string): T | null {
+		return document.querySelector<T>(selector)
+	}
+
+	const dialog = query<HTMLDialogElement>('#users-edit-modal')
+	const form = dialog?.querySelector<HTMLFormElement>('#users-edit-form')
+	const nombreInput = dialog?.querySelector<HTMLInputElement>('#users-edit-nombre')
+	const emailInput = dialog?.querySelector<HTMLInputElement>('#users-edit-email')
+	const rolSelect = dialog?.querySelector<HTMLSelectElement>('#users-edit-rol')
+	const estatusSelect = dialog?.querySelector<HTMLSelectElement>('#users-edit-estatus')
+	const aviso = dialog?.querySelector('[data-aviso]')
+	const resultado = dialog?.querySelector('[data-resultado]')
+	const botonGuardar = dialog?.querySelector<HTMLButtonElement>('[data-accion="guardar"]')
+	const botonCancelar = dialog?.querySelector<HTMLButtonElement>('[data-accion="cancelar"]')
+
+	const currentUserId = dialog?.dataset.currentUserId ?? ''
+
+	let usuarioId = ''
+	let esPropia = false
+
+	function mostrarError(mensaje: string) {
+		if (!resultado) {
+			return
+		}
+
+		const alerta = document.createElement('div')
+		alerta.className = 'alert alert-error'
+		const texto = document.createElement('span')
+		texto.textContent = mensaje
+		alerta.appendChild(texto)
+		resultado.replaceChildren(alerta)
+	}
+
+	document.querySelectorAll<HTMLButtonElement>('[data-accion="editar"]').forEach((boton) => {
+		boton.addEventListener('click', () => {
+			usuarioId = boton.dataset.userId ?? ''
+			esPropia = usuarioId === currentUserId
+
+			if (nombreInput) nombreInput.value = boton.dataset.userNombre ?? ''
+			if (emailInput) emailInput.value = boton.dataset.userEmail ?? ''
+			if (rolSelect) rolSelect.value = boton.dataset.userRol ?? ''
+			if (estatusSelect) estatusSelect.value = boton.dataset.userEstatus ?? ''
+
+			// La garantía real está en el servidor: aquí solo se guía al usuario.
+			aviso?.classList.toggle('hidden', !esPropia)
+			rolSelect?.toggleAttribute('disabled', esPropia)
+			estatusSelect?.toggleAttribute('disabled', esPropia)
+
+			resultado?.replaceChildren()
+
+			if (dialog && !dialog.open) {
+				dialog.showModal()
+			}
+		})
+	})
+
+	botonCancelar?.addEventListener('click', () => {
+		dialog?.close()
+	})
+
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault()
+
+		if (!usuarioId) {
+			return
+		}
+
+		const payload: { nombre: string; rol?: string; estatus?: string } = {
+			nombre: nombreInput?.value.trim() ?? ''
+		}
+
+		// En la propia cuenta solo se puede cambiar el nombre.
+		if (!esPropia) {
+			payload.rol = rolSelect?.value ?? ''
+			payload.estatus = estatusSelect?.value ?? ''
+		}
+
+		botonGuardar?.classList.add('btn-loading')
+		if (botonGuardar) botonGuardar.disabled = true
+
+		try {
+			const response = await fetch(`/api/users/${usuarioId}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			})
+			const data = await response.json().catch(() => null)
+
+			if (!response.ok) {
+				mostrarError(data?.error ?? 'No se pudo guardar el cambio.')
+				return
+			}
+
+			window.location.reload()
+		} catch {
+			mostrarError('No se pudo guardar el cambio.')
+		} finally {
+			botonGuardar?.classList.remove('btn-loading')
+			if (botonGuardar) botonGuardar.disabled = false
+		}
+	})
+</script>

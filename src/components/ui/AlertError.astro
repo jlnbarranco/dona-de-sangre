@@ -1,0 +1,11 @@
+---
+interface Props {
+	soft?: boolean
+}
+
+const { soft = false } = Astro.props
+---
+
+<div role="alert" class={soft ? 'alert alert-error alert-soft' : 'alert alert-error'}>
+	<slot />
+</div>

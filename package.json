@@ -9,17 +9,23 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "check": "astro check",
+    "astro": "astro",
+    "seed:users": "node --env-file=.env scripts/seed-fake-users.mjs"
   },
   "dependencies": {
     "@astrojs/netlify": "^8.2.12",
+    "@lucide/astro": "^1.72.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.3.5",
     "astro": "^7.4.7",
+    "nodemailer": "^10.4.0",
     "tailwindcss": "^4.3.5"
   },
   "devDependencies": {
-    "daisyui": "^5.7.50"
+    "@astrojs/check": "^0.9.12",
+    "daisyui": "^5.7.50",
+    "typescript": "^6.0.3"
   }
 }

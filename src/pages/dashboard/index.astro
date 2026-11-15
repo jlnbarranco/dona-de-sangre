@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../../components/ui/BaseLayout.astro'
+import AlertError from '../../components/ui/AlertError.astro'
+import AppNavbar from '../../components/ui/AppNavbar.astro'
+import AdminUsersShortcutCard from '../../features/dashboard/components/AdminUsersShortcutCard.astro'
+import { ROL_INFO } from '../../lib/roles'
+
+const claims = Astro.locals.claims
+
+if (!claims) {
+	return Astro.redirect('/auth/login?next=%2Fdashboard')
+}
+
+// El middleware ya resolvió la fila del solicitante y su estatus.
+const usuario = Astro.locals.currentUser
+
+const rolInfo = usuario ? ROL_INFO[usuario.rol] : null
+
+const isAdmin = usuario?.rol === 'admin'
+---
+
+<BaseLayout title="Panel | Dona de sangre">
+	<div class="flex min-h-svh flex-col">
+		<AppNavbar />
+
+		<main class="flex flex-1 flex-col items-center justify-start gap-4 p-4 sm:justify-center sm:p-6">
+			<section class="card w-full max-w-md bg-base-100 shadow-xl">
+				<div class="card-body gap-4">
+					<h1 class="card-title text-xl">Tu perfil</h1>
+
+					{usuario && rolInfo ? (
+						<dl class="flex flex-col gap-3">
+							<div class="min-w-0">
+								<dt class="text-sm text-base-content/60">Nombre</dt>
+								<dd class="font-medium wrap-break-word">{usuario.nombre}</dd>
+							</div>
+							<div class="min-w-0">
+								<dt class="text-sm text-base-content/60">Correo</dt>
+								<dd class="font-medium break-all">{usuario.email}</dd>
+							</div>
+							<div class="min-w-0">
+								<dt class="text-sm text-base-content/60">Rol</dt>
+								<dd class="mt-1">
+									<span class={`badge ${rolInfo.className}`}>{rolInfo.label}</span>
+								</dd>
+							</div>
+						</dl>
+					) : (
+						<AlertError>
+							<span>No se encontró tu perfil.</span>
+						</AlertError>
+					)}
+				</div>
+			</section>
+
+			{isAdmin && <AdminUsersShortcutCard />}
+		</main>
+	</div>
+</BaseLayout>

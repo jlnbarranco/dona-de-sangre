@@ -1,0 +1,116 @@
+<dialog id="users-resend-modal" class="modal" aria-labelledby="users-resend-title">
+	<div class="modal-box">
+		<h3 id="users-resend-title" class="text-lg font-bold">Reenviar invitación</h3>
+
+		<p class="py-3">
+			Se enviará una nueva invitación a <strong data-email></strong>. El enlace anterior deja de
+			funcionar y el nuevo caduca en 1 hora.
+		</p>
+
+		<div data-resultado></div>
+
+		<div class="modal-action">
+			<button type="button" class="btn" data-accion="cancelar">Cancelar</button>
+			<button type="button" class="btn btn-primary" data-accion="confirmar-reenvio">
+				Reenviar invitación
+			</button>
+			<button type="button" class="btn btn-primary hidden" data-accion="cerrar-listado">
+				Cerrar y ver el listado
+			</button>
+		</div>
+	</div>
+
+	<form method="dialog" class="modal-backdrop">
+		<button aria-label="Cerrar">Cerrar</button>
+	</form>
+</dialog>
+
+<script>
+	function query<T extends HTMLElement>(selector: string): T | null {
+		return document.querySelector<T>(selector)
+	}
+
+	const dialog = query<HTMLDialogElement>('#users-resend-modal')
+	const email = dialog?.querySelector('[data-email]')
+	const resultado = dialog?.querySelector('[data-resultado]')
+	const botonReenviar = dialog?.querySelector<HTMLButtonElement>('[data-accion="confirmar-reenvio"]')
+	const botonCerrarListado = dialog?.querySelector<HTMLButtonElement>('[data-accion="cerrar-listado"]')
+	const botonCancelar = dialog?.querySelector<HTMLButtonElement>('[data-accion="cancelar"]')
+
+	let usuarioId = ''
+	let exito = false
+
+	function pintarAlerta(mensaje: string, variante: 'alert-success' | 'alert-error') {
+		if (!resultado) {
+			return
+		}
+
+		const alerta = document.createElement('div')
+		alerta.className = `alert ${variante}`
+		const texto = document.createElement('span')
+		texto.textContent = mensaje
+		alerta.appendChild(texto)
+		resultado.replaceChildren(alerta)
+	}
+
+	document.querySelectorAll<HTMLButtonElement>('[data-accion="reenviar"]').forEach((boton) => {
+		boton.addEventListener('click', () => {
+			usuarioId = boton.dataset.userId ?? ''
+
+			if (email) email.textContent = boton.dataset.userEmail ?? ''
+
+			resultado?.replaceChildren()
+			exito = false
+			botonReenviar?.classList.remove('hidden')
+			botonCerrarListado?.classList.add('hidden')
+
+			if (dialog && !dialog.open) {
+				dialog.showModal()
+			}
+		})
+	})
+
+	botonCancelar?.addEventListener('click', () => {
+		dialog?.close()
+	})
+
+	botonReenviar?.addEventListener('click', async () => {
+		if (!usuarioId) {
+			return
+		}
+
+		botonReenviar.classList.add('btn-loading')
+		botonReenviar.disabled = true
+
+		try {
+			const response = await fetch(`/api/users/${usuarioId}/reinvite`, { method: 'POST' })
+			const data = await response.json().catch(() => null)
+
+			if (!response.ok) {
+				pintarAlerta(data?.error ?? 'No se pudo reenviar la invitación.', 'alert-error')
+				return
+			}
+
+			exito = true
+			pintarAlerta('Invitación reenviada.', 'alert-success')
+			botonReenviar.classList.add('hidden')
+			botonCerrarListado?.classList.remove('hidden')
+		} catch {
+			pintarAlerta('No se pudo reenviar la invitación.', 'alert-error')
+		} finally {
+			botonReenviar.classList.remove('btn-loading')
+			botonReenviar.disabled = false
+		}
+	})
+
+	botonCerrarListado?.addEventListener('click', () => {
+		dialog?.close()
+	})
+
+	dialog?.addEventListener('close', () => {
+		// El listado se recarga al cerrar el modal, como en el alta de usuarios.
+		if (exito) {
+			window.location.reload()
+		}
+	})
+</script>
