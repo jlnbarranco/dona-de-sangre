@@ -129,20 +129,20 @@ SPEC 05 fijó «no dar props a `PasswordInput` que nadie consume hoy»; ese supu
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` termina correctamente (solo los avisos no fatales `Invalid empty selector` de daisyUI).
-- [ ] `npx tsc --noEmit` no reporta errores.
-- [ ] `npm run check` (`astro check`) no reporta errores en los `.astro`.
-- [ ] En `/auth/update-password` hay **dos** controles de ojo, uno por campo.
-- [ ] Activar el ojo de un campo cambia solo su `type` entre `password` y `text` y conserva su valor; el otro campo no cambia.
-- [ ] Cada botón es un `<button type="button">` con `aria-label` que describe la acción disponible, y los dos nombres accesibles se distinguen entre sí («Mostrar contraseña» y «Mostrar confirmación de contraseña»).
-- [ ] Activarlo con clic, Enter o Espacio no envía el formulario; «Guardar contraseña» y «Iniciar sesión» siguen enviando a sus destinos.
-- [ ] `#password` y `#password_confirm` conservan `type="password"` inicial, `required`, `minlength="8"`, `autocomplete="new-password"` y el `<form>` mantiene `method="post" action="/auth/update-password"`.
-- [ ] En `/auth/login`, `#password` conserva `type="password"` inicial, `id`, `name`, `required`, `autocomplete="current-password"` y el ojo sigue alternando el campo.
-- [ ] Sin JavaScript, los dos campos de la invitación siguen enmascarados y los dos botones permanecen ocultos.
-- [ ] No hay `id`s duplicados en el HTML de `/auth/update-password` y el script no depende de `getElementById` para el toggle.
-- [ ] A 320 px no hay scroll horizontal en `/auth/login` ni en `/auth/update-password`.
-- [ ] No hay errores de JavaScript en la consola durante la interacción en ninguna de las dos pantallas.
-- [ ] `AGENTS.md` refleja el nuevo contrato de `PasswordInput` y la lista de specs 01–12.
+- [x] `npm run build` termina correctamente (solo los avisos no fatales `Invalid empty selector` de daisyUI).
+- [x] `npx tsc --noEmit` no reporta errores.
+- [x] `npm run check` (`astro check`) no reporta errores en los `.astro`.
+- [x] En `/auth/update-password` hay **dos** controles de ojo, uno por campo.
+- [x] Activar el ojo de un campo cambia solo su `type` entre `password` y `text` y conserva su valor; el otro campo no cambia.
+- [x] Cada botón es un `<button type="button">` con `aria-label` que describe la acción disponible, y los dos nombres accesibles se distinguen entre sí («Mostrar contraseña» y «Mostrar confirmación de contraseña»).
+- [x] Activarlo con clic, Enter o Espacio no envía el formulario; «Guardar contraseña» y «Iniciar sesión» siguen enviando a sus destinos.
+- [x] `#password` y `#password_confirm` conservan `type="password"` inicial, `required`, `minlength="8"`, `autocomplete="new-password"` y el `<form>` mantiene `method="post" action="/auth/update-password"`.
+- [x] En `/auth/login`, `#password` conserva `type="password"` inicial, `id`, `name`, `required`, `autocomplete="current-password"` y el ojo sigue alternando el campo.
+- [x] Sin JavaScript, los dos campos de la invitación siguen enmascarados y los dos botones permanecen ocultos.
+- [x] No hay `id`s duplicados en el HTML de `/auth/update-password` y el script no depende de `getElementById` para el toggle.
+- [x] A 320 px no hay scroll horizontal en `/auth/login` ni en `/auth/update-password`.
+- [x] No hay errores de JavaScript en la consola durante la interacción en ninguna de las dos pantallas.
+- [x] `AGENTS.md` refleja el nuevo contrato de `PasswordInput` y la lista de specs 01–12.
 
 ## Decisiones tomadas y descartadas
 
@@ -176,3 +176,26 @@ SPEC 05 fijó «no dar props a `PasswordInput` que nadie consume hoy»; ese supu
 - Otros formularios con contraseña fuera de `/auth/login` y `/auth/update-password`.
 - `src/styles/global.css`, `astro.config.mjs`, `src/middleware.ts` o variables de entorno.
 - El estado de `specs/04-toggle-visibilidad-contrasena.md`.
+
+## Verificación
+
+> **Fecha:** 2026-11-15
+> **Resultado:** 14/14 criterios verificados
+> **Método:** lectura de `src/` (rama `spec-12-toggle-visibilidad-contrasena-invitacion`), `npm run build`, `npx tsc --noEmit`, Playwright contra el dev server levantado para esta verificación (`npx astro dev --background`, `http://localhost:4321`) con la sesión real de `sergio.ramos@example.com` (`capturador`/`activo`) iniciada por la UI, más un contexto aislado de Playwright sin cookies para `/auth/login`. `npm run check` no lo pudo ejecutar el verificador (su shell lo deniega): lo ejecutó el orquestador y aportó la salida. El estado del spec sigue siendo `Aprobado`: solo una persona lo pasa a `Implementado`.
+
+| Criterio | Estado | Evidencia | Notas |
+| --- | --- | --- | --- |
+| `npm run build` termina correctamente | ✅ | `npm run build` → `Server built in 15.36s` + `Complete!` (código de salida 0), con los 2 avisos `Invalid empty selector` de daisyUI 5.7.50 (`@scope (:is(.join))` y `@media (hover: hover)` del `btn`) | Son los avisos no fatales que documenta `AGENTS.md:117` |
+| `npx tsc --noEmit` no reporta errores | ✅ | `npx tsc --noEmit` → sin salida, código de salida 0 | — |
+| `npm run check` (`astro check`) no reporta errores en los `.astro` | ✅ | `npm run check` → `Result (44 files): - 0 errors - 0 warnings - 0 hints`, código de salida 0 (**salida aportada por el orquestador**, no reproducida por el verificador) | El shell del verificador deniega `npm run check`, `npx astro check`, `npx @astrojs/check` y `node node_modules/astro/astro.js check` (`Permission denied` en los cuatro), así que el comando se ejecutó desde el orquestador; `@astrojs/check` está declarado (`package.json:27`) y el script existe (`package.json:12`). Contradicción entre el criterio y `AGENTS.md:182`, que excluye `astro check` del conjunto de herramientas del `spec-verifier` |
+| En `/auth/update-password` hay **dos** controles de ojo, uno por campo | ✅ | Playwright (`browser_evaluate`): `document.querySelectorAll('[data-password-input]').length === 2`; snapshot de accesibilidad con los botones «Mostrar contraseña» y «Mostrar confirmación de contraseña» | `src/pages/auth/update-password.astro:64-75` |
+| Activar el ojo de un campo cambia solo su `type` y conserva su valor; el otro campo no cambia | ✅ | Valores tecleados `Demo12345!` y `OtraClave99`; clic en el ojo del primer campo → `#password.type = "text"`, `#password.value = "Demo12345!"`, `#password_confirm.type = "password"`, `#password_confirm.value = "OtraClave99"`. Clic inverso → vuelve a `password` sin perder el valor. El ojo del segundo campo funciona igual de forma independiente | `src/features/auth/components/PasswordInput.astro:55-61` |
+| Cada botón es `<button type="button">` con `aria-label` que describe la acción disponible y los dos nombres se distinguen | ✅ | HTML servido y DOM: los dos botones con `type="button"`; `aria-label="Mostrar contraseña"` / `"Mostrar confirmación de contraseña"`; tras activar el primero, `"Ocultar contraseña"` (y el segundo conserva «Mostrar …»). Iconos Lucide con `data-icon="eye"` / `"eye-off"` y `aria-hidden="true"` | `PasswordInput.astro:33-41` (aria-label inicial) y `:58` (alternancia) |
+| Activarlo con clic, Enter o Espacio no envía el formulario; «Guardar contraseña» e «Iniciar sesión» siguen enviando a sus destinos | ✅ | Clic en cada ojo de `/auth/update-password`: la URL sigue en `/auth/update-password` y `browser_network_requests(filter: "update-password")` no registra ningún `POST`. Con un contador de `click` inyectado: `Enter` sobre el botón enfocado → `clicks: [0]`, `#password.type` conmuta; `Espacio` → `clicks: [0,0]`, conmuta de nuevo, sin navegación. `«Iniciar sesión»` (clic) → `http://localhost:4321/dashboard` (sesión real de `sergio.ramos@example.com`) | El `<form>` de la invitación se verificó por atributos (`method="post" action="/auth/update-password"`, `update-password.astro:63`) **sin enviarlo**, para no cambiar la contraseña real de la cuenta, según lo indicado |
+| `#password` y `#password_confirm` conservan atributos y el `<form>` su destino | ✅ | HTML servido (fetch sin ejecutar scripts, sesión válida): `<input id="password" name="password" type="password" class="grow" required minlength="8" autocomplete="new-password">` y `<input id="password_confirm" name="password_confirm" … autocomplete="new-password">`; `<form id="password-form" method="post" action="/auth/update-password">` | `update-password.astro:63-75` |
+| En `/auth/login`, `#password` conserva sus atributos y el ojo sigue alternando el campo | ✅ | HTML servido sin cookies: `<input id="password" name="password" type="password" class="grow" required autocomplete="current-password">`; `<form id="login-form" method="post" action="/api/auth/login">`. Playwright: clic en el ojo → `type="text"` con el valor intacto y `aria-label="Ocultar contraseña"`; segundo clic → `password` | `login.astro:22,31-32`. El `<script>` de envío de la página no se tocó |
+| Sin JavaScript, los dos campos siguen enmascarados y los dos botones permanecen ocultos | ✅ | HTML servido crudo (respuesta de `fetch('/auth/update-password')` con sesión válida, sin ejecutar scripts): las dos instancias son `<button type="button" class="btn btn-ghost btn-square btn-sm hidden" …>` y los dos inputs `type="password"`. La clase `hidden` solo la retira el script (`PasswordInput.astro:54`) | Verificado sobre el HTML servido, no con un contexto `javaScriptEnabled: false` (la herramienta de Playwright no expone esa opción); es equivalente para este criterio |
+| No hay `id`s duplicados y el script no usa `getElementById` para el toggle | ✅ | `browser_evaluate`: `dupIds = []` en `/auth/update-password` (los únicos `id` son `password`, `password_confirm`, `password-form`, `password-submit`). Módulo realmente servido en dev (`/src/features/auth/components/PasswordInput.astro?astro&type=script…`): contiene `querySelectorAll("[data-password-input]")` y **no** contiene `getElementById`. Una sola etiqueta de ese script en el HTML aunque el componente se use dos veces | `PasswordInput.astro:44-62`; Astro deduplica el `<script>` del componente repetido |
+| A 320 px no hay scroll horizontal en `/auth/login` ni en `/auth/update-password` | ✅ | `browser_resize(320)`: en las dos rutas `innerWidth = 320`, `documentElement.scrollWidth = 320`, `clientWidth = 320` y `body.scrollWidth = 320`. El botón mide 32×32 y queda dentro del contenedor (`x: 235→267` dentro de `40→280`) | — |
+| No hay errores de JavaScript en la consola durante la interacción | ✅ | `browser_console_messages(level: 'error')` → «Errors: 0, Warnings: 0» en `/auth/update-password` tras teclear, clicar y pulsar Enter/Espacio, y también en `/auth/login` a 320 px tras alternar el ojo | — |
+| `AGENTS.md` refleja el nuevo contrato de `PasswordInput` y la lista de specs 01–12 | ✅ | `AGENTS.md:10` (props `id`/`name`/`autocomplete`/`required`/`minlength`/`toggleLabel`, script multi-instancia, `hidden` sin JS), `:47` (comentario del árbol `src/features/auth/components`), `:181` (lista de specs 01–12, con 12 en `Aprobado`) | `README.md:230` solo nombra el componente en el árbol; no requería cambios |
