@@ -6,8 +6,9 @@
 - App must be responsive: it has to read clearly on smartphones and PCs (verified at 320 px, no horizontal scroll).
 - Astro 7 SSR site (`output: 'server'`) with the `@astrojs/netlify` adapter, Tailwind CSS 4 (Vite plugin) and daisyUI 5. No UI framework integration (React/Vue/Svelte).
 - Supabase Auth is wired through `@supabase/ssr` with server-side cookies: `src/lib/supabase.ts`, `src/middleware.ts` (session refresh, `/dashboard` protection and the account-status check), `POST /api/auth/login` and `POST /api/auth/logout`. `public.usuarios` stores the profile, the role (`admin` / `supervisor` / `capturador`) and the status (`activo` / `inactivo`) with RLS; it never stores passwords.
-- Pages: `src/pages/auth/login.astro`, protected `src/pages/dashboard/index.astro`, role-protected `src/pages/dashboard/admin/users.astro` (403 unless the session is an `admin`; lists the users with server-side search, status filter and pagination), `src/pages/auth/confirm.astro` (verifies the invite token), `src/pages/auth/update-password.astro` (GET form + POST handler), `src/pages/cuenta-desactivada.astro` (403 shown to a deactivated account) and API routes `src/pages/api/{auth/login,auth/logout,invitations}.ts` plus `src/pages/api/users/[id].ts` (PATCH/DELETE) and `src/pages/api/users/[id]/reinvite.ts` (POST); `/` redirects to `/auth/login` through `redirects` in `astro.config.mjs`. Only stylesheet: `src/styles/global.css`.
+- Pages: `src/pages/auth/login.astro`, protected `src/pages/dashboard/index.astro`, the protected `src/pages/dashboard/donaciones/nueva.astro` (visual placeholder for the donation form; no role guard, any active session), role-protected `src/pages/dashboard/admin/users.astro` (403 unless the session is an `admin`; lists the users with server-side search, status filter and pagination), `src/pages/auth/confirm.astro` (verifies the invite token), `src/pages/auth/update-password.astro` (GET form + POST handler), `src/pages/cuenta-desactivada.astro` (403 shown to a deactivated account) and API routes `src/pages/api/{auth/login,auth/logout,invitations}.ts` plus `src/pages/api/users/[id].ts` (PATCH/DELETE) and `src/pages/api/users/[id]/reinvite.ts` (POST); `/` redirects to `/auth/login` through `redirects` in `astro.config.mjs`. Only stylesheet: `src/styles/global.css`.
 - Role checks live in page frontmatter, not in `src/middleware.ts`: the middleware only protects `/dashboard/*` by session and blocks deactivated accounts. `src/lib/current-user.ts` (`getCurrentUser`) is the single reader of the requester's row in `public.usuarios`; the middleware resolves it once per request and exposes it as `Astro.locals.currentUser`.
+- `/dashboard` renders `NewDonationShortcutCard.astro` for every active session (no role check) and it links to `/dashboard/donaciones/nueva`. That page is visual only: `src/features/donations/components/NewDonationPanel.astro` shows a placeholder alert and a «Volver al panel» link, with no form, no data access and no API. The donation form itself is still pending.
 - Deactivated accounts are blocked in two layers: a database trigger keeps `auth.users.banned_until` in sync with `public.usuarios.estatus` (so `signInWithPassword` fails), and the middleware closes the session and answers 403 on any request with a session whose status is `inactivo` (302 to `/cuenta-desactivada` for pages, JSON for `/api/*`, 503 if the status cannot be read). The status is editable from the app: the `admin` changes it in the edit modal of `/dashboard/admin/users`.
 - The user listing reads `public.usuarios` with the requester's own session client (`Astro.locals.supabase`), so RLS does the filtering; the secret key stays out of it. The search term is sanitized before it reaches the PostgREST filter (`sanitizeSearchTerm` in `src/features/users/lib/users-list.ts`) and the status filter is a whitelist (`sanitizeEstatusFilter`).
 - The admin can create people from `/dashboard/admin/users`: a `<dialog class="modal">` (`src/features/users/components/UsersInviteModal.astro`) with three views (form → confirmation → result) that posts `{ nombre, email, rol }` to `POST /api/invitations`. The button and the modal are rendered only in the authorized branch of `AdminUsersPanel.astro` (`autorizado = !denied && result !== undefined`), so a non-admin gets a 403 and no button in the HTML.
@@ -45,7 +46,11 @@ src/
 │   │       └── PasswordInput.astro        # div.input + password field + toggle + its script
 │   ├── dashboard/
 │   │   └── components/
-│   │       └── AdminUsersShortcutCard.astro # admin-only card linking to /dashboard/admin/users
+│   │       ├── AdminUsersShortcutCard.astro # admin-only card linking to /dashboard/admin/users
+│   │       └── NewDonationShortcutCard.astro # card linking to /dashboard/donaciones/nueva (all roles)
+│   ├── donations/
+│   │   └── components/
+│   │       └── NewDonationPanel.astro      # card of the destination page: placeholder alert + «Volver al panel»
 │   ├── users/
 │   │   ├── components/
 │   │   │   ├── AdminUsersPanel.astro      # props denied?/result?/currentUserId: card that composes the row actions
@@ -68,7 +73,8 @@ src/
 │           └── supabase-admin.ts          # admin client using SUPABASE_SECRET_API_KEY
 └── pages/
     ├── cuenta-desactivada.astro           # 403 for a deactivated account (exempt from the status check)
-    ├── dashboard/index.astro              # profile card (+ admin shortcut card)
+    ├── dashboard/index.astro              # profile card + «Registrar donación» card (+ admin shortcut card)
+    ├── dashboard/donaciones/nueva.astro   # donation form page: placeholder only (no role guard)
     ├── dashboard/admin/users.astro        # role guard: Astro.response.status = 403 if not admin
     ├── auth/{login,confirm,update-password}.astro
     └── api/
@@ -171,7 +177,7 @@ Unchanged rules, restated here so they are never lost during refactors:
 - `/spec-impl` executes the implementation plan **one numbered step at a time**: implement exactly one step, summarize the files touched and show the diff, then **stop and wait for human review**. Never chain several steps in one go; continue only after the user explicitly confirms (`yes`, `go`, equivalent). If there are no steps left, say so and stop.
 - Never commit automatically, per step or at the end; only when the user explicitly asks. Only a human moves a spec to `Approved` and to `Implemented`. `/spec-impl` creates/switches to branch `spec-NN-slug` before implementing.
 - `spec-verifier` only verifies and edits files under `specs/**`; it must not change app code or the spec's status.
-- `specs/` holds `specs/01-login.md`, `specs/02-auth-supabase.md`, `specs/03-invitacion-confirmacion.md` and `specs/04-toggle-visibilidad-contrasena.md` (all `Implementado`), plus `specs/05-refactor-fdd-componentes.md`, `specs/06-admin-usuarios.md`, `specs/07-listado-usuarios.md`, `specs/08-estatus-usuarios.md`, `specs/09-alta-usuario-desde-panel.md` and `specs/10-edicion-borrado-y-reenvio-invitacion.md`. New specs follow `specs/NN-slug.md`.
+- `specs/` holds `specs/01-login.md`, `specs/02-auth-supabase.md`, `specs/03-invitacion-confirmacion.md` and `specs/04-toggle-visibilidad-contrasena.md` (all `Implementado`), plus `specs/05-refactor-fdd-componentes.md`, `specs/06-admin-usuarios.md`, `specs/07-listado-usuarios.md`, `specs/08-estatus-usuarios.md`, `specs/09-alta-usuario-desde-panel.md`, `specs/10-edicion-borrado-y-reenvio-invitacion.md` and `specs/11-seccion-formulario-donaciones.md` (11 is `Aprobado`; the rest are `Implementado`). New specs follow `specs/NN-slug.md`.
 - `spec-verifier` uses `npx astro dev *`, `npm run build`, `npx tsc --noEmit` (never `astro check`), read-only git, read-only `curl`, Playwright, Context7, Astro Docs and the Supabase MCP. Its Supabase access is read-only: no migrations, branches, Edge Functions or DML/DDL. It must ask before mutating real state (invitations, real `POST`s).
 
 ## References

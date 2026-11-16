@@ -10,6 +10,7 @@ El acceso a la aplicación está protegido: solo las cuentas creadas por el labo
 
 - Inicio y cierre de sesión con Supabase Auth y sesión en cookies `httpOnly`.
 - Panel protegido (`/dashboard`) que muestra el perfil y el rol del usuario.
+- Sección «Registrar donación» en el panel, visible para todos los roles, que lleva a la página `/dashboard/donaciones/nueva` (por ahora solo con el marcado: el formulario llegará después).
 - Acceso de administración (`/dashboard/admin/users`), visible solo para el rol `admin` y protegido con un 403 en el servidor.
 - Listado de los usuarios registrados con búsqueda por nombre o correo, filtro por estatus y paginación de 10 por página, resuelto en el servidor (sin JavaScript).
 - Estatus de cada cuenta (`activo` / `inactivo`): una cuenta inactiva no puede iniciar sesión ni usar la aplicación, y el `admin` ve el estatus de cada persona en el listado.
@@ -24,7 +25,7 @@ El acceso a la aplicación está protegido: solo las cuentas creadas por el labo
 
 **Pendiente**
 
-- Formulario de captura de donadores (el objetivo principal del producto).
+- Formulario de captura de donadores (el objetivo principal del producto): la sección del panel y la página `/dashboard/donaciones/nueva` ya existen, pero falta el formulario y su persistencia.
 - Recuperación de contraseña («¿Olvidaste tu contraseña?»).
 
 ## Stack tecnológico
@@ -227,7 +228,8 @@ src/
 │       └── AppNavbar.astro                # navbar del panel y «Cerrar sesión»
 ├── features/
 │   ├── auth/components/                   # AuthCard, FormField, PasswordInput
-│   ├── dashboard/components/              # AdminUsersShortcutCard
+│   ├── dashboard/components/              # AdminUsersShortcutCard, NewDonationShortcutCard
+│   ├── donations/components/              # NewDonationPanel (marcador del formulario futuro)
 │   ├── users/
 │   │   ├── components/                    # AdminUsersPanel, UsersSearchForm, UsersTable, UsersPagination y los modales
 │   │   │                                  # UsersInviteModal, UsersEditModal, UsersDeleteModal, UsersResendModal
@@ -238,6 +240,7 @@ src/
     ├── cuenta-desactivada.astro           # 403 para una cuenta desactivada
     ├── dashboard/index.astro              # panel protegido
     ├── dashboard/admin/users.astro        # listado de usuarios (solo admin)
+    ├── dashboard/donaciones/nueva.astro   # página del formulario de donaciones (marcador)
     ├── auth/{login,confirm,update-password}.astro
     └── api/
         ├── invitations.ts
@@ -262,7 +265,8 @@ Reglas de organización:
 | `/auth/login` | Formulario de inicio de sesión. |
 | `/auth/confirm` | Verifica el token de invitación, crea la sesión y redirige a la elección de contraseña. |
 | `/auth/update-password` | `GET`: formulario de contraseña nueva. `POST`: valida y guarda la contraseña. |
-| `/dashboard` | Panel protegido: muestra el perfil y el rol del usuario. Solo el `admin` ve además la tarjeta «Administrar usuarios». |
+| `/dashboard` | Panel protegido: muestra el perfil y el rol del usuario y la tarjeta «Registrar donación» (todos los roles). Solo el `admin` ve además la tarjeta «Administrar usuarios». |
+| `/dashboard/donaciones/nueva` | Página del registro de donaciones, para cualquier rol con sesión activa. Hoy solo muestra el marcador del formulario futuro. |
 | `/dashboard/admin/users` | Listado de los usuarios registrados, solo para `admin`: responde 403 si la sesión no es de un administrador. Admite `?q=` (búsqueda por nombre o correo), `?estatus=` (`activo` o `inactivo`) y `?page=` (paginación de 10). |
 | `/cuenta-desactivada` | Aviso de cuenta desactivada. Responde 403 y no requiere sesión. |
 
