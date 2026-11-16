@@ -1,0 +1,21 @@
+# Formulario para el registro de datos de donadores de sangre
+
+## Caso de uso 1: Registro inicial, donación recurrente y corrección de datos
+
+Un donador acude al laboratorio para realizar una donación de sangre. Antes de tomar la muestra, un miembro del laboratorio (**capturador**) abre la aplicación e ingresa a la sección del formulario para realizar una entrevista estructurada. En ella se recaban sus datos personales —con los cuales se genera un **ID único**—, su historial clínico y sus antecedentes heredofamiliares, poniendo especial énfasis en padecimientos crónicos, alergias y cáncer.
+
+En este caso, dado que la donadora es mujer, el formulario despliega un campo adicional para registrar la etapa del ciclo menstrual en la que se encuentra. Una vez completado el cuestionario, se guarda el registro y se procede a la toma de la muestra.
+
+Dos meses después, la misma donadora regresa al laboratorio. Al ingresar su nombre en la aplicación, el sistema detecta la coincidencia y ofrece la opción de vincular este nuevo registro al ID previamente asignado. Para validar su identidad, el capturador verifica en pantalla el nombre, el tipo de sangre y la fecha de nacimiento de la primera visita; tras confirmar los datos con la donadora, acepta la vinculación, realiza el cuestionario de rutina y guarda el nuevo registro.
+
+Durante esta segunda captura, el operador comete errores en algunas respuestas y envía el formulario. Como su perfil no cuenta con permisos de edición posterior al envío, notifica a un **supervisor**, quien accede al registro, modifica los campos incorrectos y guarda las correcciones.
+
+---
+
+## Caso de uso 2: Toma de muestra externa y gestión de catálogos
+
+Un miembro del laboratorio con rol de **supervisor** acude a un hospital para tomar la muestra de sangre de un paciente y aplicar el cuestionario de rutina mediante la aplicación.
+
+En el formulario, selecciona el campo correspondiente al lugar de procedencia de la muestra (*laboratorio* u *hospital*). Al notar que la institución médica en la que se encuentra no figura en el catálogo desplegable, hace uso de sus privilegios de supervisor para dar de alta el nuevo hospital, dejándolo disponible en la lista de opciones para futuros registros.
+
+
