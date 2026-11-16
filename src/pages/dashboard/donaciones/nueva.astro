@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../../../components/ui/BaseLayout.astro'
+import AppNavbar from '../../../components/ui/AppNavbar.astro'
+import NewDonationPanel from '../../../features/donations/components/NewDonationPanel.astro'
+
+const claims = Astro.locals.claims
+
+if (!claims) {
+	return Astro.redirect('/auth/login?next=%2Fdashboard%2Fdonaciones%2Fnueva')
+}
+---
+
+<BaseLayout title="Registrar donación | Dona de sangre">
+	<div class="flex min-h-svh flex-col">
+		<AppNavbar />
+
+		<main class="flex flex-1 flex-col items-center justify-start gap-4 p-4 sm:justify-center sm:p-6">
+			<NewDonationPanel />
+		</main>
+	</div>
+</BaseLayout>
