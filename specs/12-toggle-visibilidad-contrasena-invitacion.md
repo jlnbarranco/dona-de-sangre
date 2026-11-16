@@ -1,6 +1,6 @@
 # SPEC 12 — Visibilidad de contraseña al aceptar la invitación
 
-> **Estado:** Borrador
+> **Estado:** Aprobado
 > **Depende de:** SPEC 02, SPEC 03, SPEC 04, SPEC 05
 > **Fecha:** 2026-11-15
 > **Objetivo:** que al aceptar la invitación y elegir la contraseña, cada campo de `/auth/update-password` tenga su propio control de ojo para mostrar u ocultar temporalmente lo escrito, sin cambiar el valor que se envía a Supabase.
